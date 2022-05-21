@@ -10,8 +10,8 @@ from t_maze_env import TMazeEnv
 # Parameters
 
 SEED = 0
-LENGTH = 5
-MAX_TIMESTEP = 2000
+LENGTH = 3
+MAX_TIMESTEP = 10**4
 START_TIMESTEPS = 50
 EVAL_FREQ = 100
 MAX_MEMORY = 10 ** 4
@@ -32,7 +32,14 @@ policy = RNNAgent(
 
 
 def eval_policy(policy, length, eval_episodes=10):
-    eval_policy = copy.deepcopy(policy)
+    eval_policy = RNNAgent(
+        obs_dim=obs_dim,
+        action_dim=action_dim,
+        memory_dim=RNN_MEMORY_DIM,
+    )
+
+    eval_policy.actor.load_state_dict(policy.actor.state_dict())
+    eval_policy.encoder.load_state_dict(policy.encoder.state_dict())
 
     eval_env = TMazeEnv(length=length)
     eval_env.seed(SEED + 100)
@@ -85,11 +92,10 @@ for t in range(MAX_TIMESTEP):
 
     else:
 
-        # action = policy.select_action(obs)
-        action = env.action_space.sample()
+        action = policy.select_action(obs)
 
     next_obs, reward, done, info = env.step(action)
-    # print(next_obs, reward, done, info, action)
+    print(next_obs, reward, done, info, action)
 
     replay_buffer.add(obs, action, reward, done)
 

@@ -1,5 +1,8 @@
 
 import numpy as np
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class ReplayBuffer:
@@ -10,7 +13,7 @@ class ReplayBuffer:
         self.size = 0
 
         self.obs = np.zeros((max_size, obs_dim))
-        self.action = np.zeros((max_size, action_dim))
+        self.action = np.zeros((max_size), dtype=int)
         self.reward = np.zeros((max_size, 1))
         self.not_done = np.zeros((max_size, 1))
 
@@ -28,17 +31,19 @@ class ReplayBuffer:
     def sample(self, n_traj: int, length: int):
         ind = np.random.randint(0, self.size - length, size=n_traj)
 
-        traj = []
-        for i in ind:
-            traj_sample = (
-                self.obs[i:i+length+1],  # add an additional obs for the value prediction
-                self.action[i:i+length],
-                self.reward[i:i+length],
-                self.not_done[i:i+length]
-            )
-            traj.append(traj_sample)
+        obss = np.array([self.obs[i:i+length+1] for i in ind])
+        obss = torch.FloatTensor(obss).to(device)
 
-        return traj
+        actions = np.array([self.action[i:i+length+1] for i in ind], dtype=np.int8)
+        actions = torch.tensor(actions, dtype=torch.int64).to(device)
+
+        rewards = np.array([self.reward[i:i+length] for i in ind])
+        rewards = torch.FloatTensor(rewards).to(device)
+
+        not_dones = np.array([self.not_done[i:i+length] for i in ind])
+        not_dones = torch.FloatTensor(not_dones).to(device)
+
+        return obss, actions, rewards, not_dones
 
 
 if __name__ == '__main__':
