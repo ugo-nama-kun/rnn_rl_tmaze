@@ -40,7 +40,7 @@ class ReplayBuffer:
         rewards = np.array([self.reward[i:i+length] for i in ind])
         rewards = torch.FloatTensor(rewards).to(device)
 
-        not_dones = np.array([self.not_done[i:i+length] for i in ind])
+        not_dones = np.array([self.not_done[i:i+length+1] for i in ind])
         not_dones = torch.FloatTensor(not_dones).to(device)
 
         return obss, actions, rewards, not_dones
